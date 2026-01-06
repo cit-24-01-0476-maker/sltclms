@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ICAL from 'ical.js';
+import { FaCalendarAlt, FaClock, FaLink, FaTrash, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 import './App.css';
 
 function App() {
@@ -21,49 +22,46 @@ function App() {
     setError('');
     
     try {
-      // Proxy URL එක හරහා දත්ත ලබාගැනීම
       const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(calendarUrl)}`;
-      
       const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error("Link එක වැඩ නැහැ. කරුණාකර නිවැරදි Link එක දාන්න.");
+      if (!response.ok) throw new Error("Link eka weda na. Check karanna.");
       
       const textData = await response.text();
-      
-      // iCal Data parse කිරීම (අලුත් ක්‍රමය)
       const jcalData = ICAL.parse(textData);
       const comp = new ICAL.Component(jcalData);
       const vevents = comp.getAllSubcomponents('vevent');
 
       const formattedEvents = vevents.map(vevent => {
-        // අපි ICAL.Event wrapper එක පාවිච්චි කරනවා, මේකෙන් නම ගන්න ලේසියි
         const event = new ICAL.Event(vevent);
-        
         const title = event.summary;
         const description = event.description;
         const startDate = event.startDate.toJSDate();
-
-        // Debugging සඳහා Console එකට විස්තර යවමු
-        console.log("Found Event:", title, startDate);
+        
+        // දවස් ගණන (Days Left) ගණනය කිරීම
+        const now = new Date();
+        const diffTime = startDate - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         return {
           id: event.uid,
-          title: title || "නමක් සොයාගත නොහැක (No Title)", // නම නැත්නම් මේක පෙන්වයි
-          date: startDate.toDateString(),
+          title: title || "No Title",
+          date: startDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
           time: startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          description: description || "විස්තරයක් නැත",
-          rawDate: startDate
+          description: description || "",
+          rawDate: startDate,
+          daysLeft: diffDays
         };
       });
 
-      // ළඟම එන Assignments උඩින්ම පෙන්වන්න
+      // ළඟම තියෙන ඒවා උඩට ගන්න
       formattedEvents.sort((a, b) => a.rawDate - b.rawDate);
-
+      
       setAssignments(formattedEvents);
       localStorage.setItem('sltc_calendar_url', calendarUrl);
 
     } catch (err) {
-      console.error("Error fetching assignments:", err);
-      setError("දත්ත ලබාගැනීමට නොහැක. Link එක නිවැරදි දැයි බලන්න.");
+      console.error(err);
+      setError("Link එකේ දෝෂයක්. කරුණාකර නිවැරදි Link එක දාන්න.");
     } finally {
       setLoading(false);
     }
@@ -81,52 +79,67 @@ function App() {
   };
 
   return (
-    <div className="container">
-      <header className="header">
-        <h1>📚 SLTC Assignment Tracker</h1>
-        <p>LMS Calendar Link එක පහතින් දාන්න.</p>
-      </header>
+    <div className="app-container">
+      <div className="glass-panel">
+        <header className="header">
+          <h1>🚀 SLTC <span className="highlight">Tracker</span></h1>
+          <p>Assignments, Deadlines ඔක්කොම එකම තැනකින්.</p>
+        </header>
 
-      <div className="search-box">
-        <form onSubmit={handleSearch}>
-          <input 
-            type="text" 
-            placeholder="Paste SLTC Calendar URL..." 
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            required
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? 'සොයමින්...' : 'Assignments පෙන්වන්න'}
-          </button>
-        </form>
-        {assignments.length > 0 && (
-            <button onClick={clearData} className="clear-btn">Clear & Reset</button>
-        )}
-      </div>
-
-      {error && <div className="error">{error}</div>}
-
-      <div className="grid">
-        {assignments.length > 0 ? (
-          assignments.map((item, index) => (
-            <div key={index} className="card">
-              <div className="date-badge">
-                <span>{item.date}</span>
-              </div>
-              {/* නම නැත්නම් රතු පාටින් පෙන්වන්න */}
-              <h3 style={{ color: item.title.includes("No Title") ? 'red' : '#2c3e50' }}>
-                {item.title}
-              </h3>
-              <p className="time">⏰ Due: {item.time}</p>
-              <div className="desc-box">
-                <p>{item.description.replace(/<[^>]*>?/gm, '').substring(0, 100)}...</p>
-              </div>
+        <div className="input-section">
+          <form onSubmit={handleSearch} className="search-form">
+            <div className="input-group">
+              <FaLink className="input-icon" />
+              <input 
+                type="text" 
+                placeholder="Paste SLTC Calendar Link here..." 
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                required
+              />
             </div>
-          ))
-        ) : (
-          !loading && <div className="empty-state">Assignments කිසිවක් නැත.</div>
-        )}
+            <button type="submit" disabled={loading} className="btn-primary">
+              {loading ? 'සොයමින්...' : 'Assignments පෙන්වන්න'}
+            </button>
+          </form>
+          
+          {assignments.length > 0 && (
+            <button onClick={clearData} className="btn-clear">
+              <FaTrash /> Reset
+            </button>
+          )}
+        </div>
+
+        {error && <div className="error-msg"><FaExclamationCircle /> {error}</div>}
+
+        <div className="grid-container">
+          {assignments.length > 0 ? (
+            assignments.map((item, index) => (
+              <div key={index} className={`task-card ${item.daysLeft < 3 ? 'urgent' : ''}`}>
+                <div className="card-top">
+                  <span className={`status-badge ${item.daysLeft < 0 ? 'overdue' : item.daysLeft < 3 ? 'danger' : 'safe'}`}>
+                    {item.daysLeft < 0 ? 'Overdue' : item.daysLeft === 0 ? 'Today!' : `${item.daysLeft} Days Left`}
+                  </span>
+                  <span className="date-text"><FaCalendarAlt /> {item.date}</span>
+                </div>
+                
+                <h3 className="task-title">{item.title}</h3>
+                
+                <div className="card-footer">
+                  <span className="time-text"><FaClock /> Due: {item.time}</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            !loading && (
+              <div className="empty-state">
+                <FaCheckCircle className="empty-icon" />
+                <h3>No Tasks Found!</h3>
+                <p>ඔයාගේ Calendar Link එක Paste කරන්න.</p>
+              </div>
+            )
+          )}
+        </div>
       </div>
     </div>
   );
