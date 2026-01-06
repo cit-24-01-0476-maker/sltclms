@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ICAL from 'ical.js';
-import { FaCalendarAlt, FaClock, FaLink, FaTrash, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
+import { FaCalendarAlt, FaClock, FaLink, FaTrash, FaCheckCircle, FaExclamationCircle, FaRocket } from 'react-icons/fa';
 import './App.css';
 
 function App() {
@@ -22,9 +22,9 @@ function App() {
     setError('');
     
     try {
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(calendarUrl)}`;
+      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(calendarUrl)}`;
       const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error("Link eka weda na. Check karanna.");
+      if (!response.ok) throw new Error("Link එකේ දෝෂයක්. කරුණාකර පරීක්ෂා කරන්න.");
       
       const textData = await response.text();
       const jcalData = ICAL.parse(textData);
@@ -37,7 +37,6 @@ function App() {
         const description = event.description;
         const startDate = event.startDate.toJSDate();
         
-        // දවස් ගණන (Days Left) ගණනය කිරීම
         const now = new Date();
         const diffTime = startDate - now;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -53,15 +52,13 @@ function App() {
         };
       });
 
-      // ළඟම තියෙන ඒවා උඩට ගන්න
       formattedEvents.sort((a, b) => a.rawDate - b.rawDate);
-      
       setAssignments(formattedEvents);
       localStorage.setItem('sltc_calendar_url', calendarUrl);
 
     } catch (err) {
       console.error(err);
-      setError("Link එකේ දෝෂයක්. කරුණාකර නිවැරදි Link එක දාන්න.");
+      setError("දත්ත ලබාගැනීමට නොහැක. Link එක නිවැරදි දැයි බලන්න.");
     } finally {
       setLoading(false);
     }
@@ -79,11 +76,21 @@ function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className="main-wrapper">
+      {/* පසුබිමේ යන ලස්සන පාට බෝල (Animation සඳහා) */}
+      <div className="background-gradient">
+        <div className="shape shape-1"></div>
+        <div className="shape shape-2"></div>
+        <div className="shape shape-3"></div>
+      </div>
+
       <div className="glass-panel">
         <header className="header">
-          <h1>🚀 SLTC <span className="highlight">Tracker</span></h1>
-          <p>Assignments, Deadlines ඔක්කොම එකම තැනකින්.</p>
+          <div className="logo-badge">
+            <FaRocket className="rocket-icon" />
+          </div>
+          <h1>SLTC <span className="highlight">Tracker</span></h1>
+          <p>Your ultimate deadline companion.</p>
         </header>
 
         <div className="input-section">
@@ -99,13 +106,13 @@ function App() {
               />
             </div>
             <button type="submit" disabled={loading} className="btn-primary">
-              {loading ? 'සොයමින්...' : 'Assignments පෙන්වන්න'}
+              {loading ? 'Checking...' : 'Show Tasks'}
             </button>
           </form>
           
           {assignments.length > 0 && (
             <button onClick={clearData} className="btn-clear">
-              <FaTrash /> Reset
+              <FaTrash /> Reset All
             </button>
           )}
         </div>
@@ -126,21 +133,28 @@ function App() {
                 <h3 className="task-title">{item.title}</h3>
                 
                 <div className="card-footer">
-                  <span className="time-text"><FaClock /> Due: {item.time}</span>
+                  <span className="time-text"><FaClock /> {item.time}</span>
                 </div>
               </div>
             ))
           ) : (
             !loading && (
               <div className="empty-state">
-                <FaCheckCircle className="empty-icon" />
-                <h3>No Tasks Found!</h3>
-                <p>ඔයාගේ Calendar Link එක Paste කරන්න.</p>
+                <div className="empty-icon-circle">
+                   <FaCheckCircle />
+                </div>
+                <h3>No Tasks Found</h3>
+                <p>Paste your calendar link to get started.</p>
               </div>
             )
           )}
         </div>
       </div>
+
+      {/* Footer එක දැන් Site එකේ පහළම තියෙන්නේ */}
+      <footer className="site-footer">
+        <p>Powered by <span className="brand-name">Oska Tech 🚀</span></p>
+      </footer>
     </div>
   );
 }
