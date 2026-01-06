@@ -17,7 +17,9 @@ function App() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all'); 
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  // FIX: Phone එකෙන් එනවා නම් Menu එක මුලින්ම වහලා තියන්න (False), PC නම් ඇරලා තියන්න (True)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1000);
   
   const glowRef = useRef(null);
 
@@ -33,6 +35,7 @@ function App() {
 
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
 
+    // Mouse Glow Effect
     const handleMouseMove = (e) => {
       if (glowRef.current) {
         glowRef.current.style.left = `${e.clientX}px`;
@@ -41,11 +44,29 @@ function App() {
     };
     window.addEventListener('mousemove', handleMouseMove);
 
+    // FIX: Screen එක Resize කරනකොට Menu එක Auto adjust වෙන්න
+    const handleResize = () => {
+      if (window.innerWidth > 1000) {
+        setIsSidebarOpen(true); // PC නම් ඇරලා තියන්න
+      } else {
+        setIsSidebarOpen(false); // Phone නම් වහන්න
+      }
+    };
+    window.addEventListener('resize', handleResize);
+
     return () => {
       clearInterval(timer);
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  // FIX: Mobile එකේ Menu එකේ Button එකක් එබුවම මෙනු එක වැහෙන්න ඕනේ
+  const handleNavClick = () => {
+    if (window.innerWidth <= 1000) {
+      setIsSidebarOpen(false);
+    }
+  };
 
   const fetchAssignments = async (calendarUrl) => {
     setLoading(true);
@@ -100,6 +121,7 @@ function App() {
     setUrl('');
     setAssignments([]);
     setCompletedTasks([]);
+    if (window.innerWidth <= 1000) setIsSidebarOpen(false);
   };
 
   const toggleComplete = (id) => {
@@ -155,11 +177,11 @@ function App() {
         </div>
         
         <nav className="fs-nav">
-          <a href="#" className="fs-link active"><FaHome /> Dashboard</a>
-          <a href="#" className="fs-link"><FaBook /> Courses</a>
-          <a href="#" className="fs-link"><FaCalendarAlt /> Calendar</a>
-          <a href="#" className="fs-link"><FaChartPie /> Analytics</a>
-          <a href="#" className="fs-link"><FaCog /> Settings</a>
+          <a href="#" className="fs-link active" onClick={handleNavClick}><FaHome /> Dashboard</a>
+          <a href="#" className="fs-link" onClick={handleNavClick}><FaBook /> Courses</a>
+          <a href="#" className="fs-link" onClick={handleNavClick}><FaCalendarAlt /> Calendar</a>
+          <a href="#" className="fs-link" onClick={handleNavClick}><FaChartPie /> Analytics</a>
+          <a href="#" className="fs-link" onClick={handleNavClick}><FaCog /> Settings</a>
         </nav>
 
         <div className="fs-footer">
@@ -246,7 +268,6 @@ function App() {
                 return (
                   <div key={index} className={`fs-task-card glass-effect hover-float ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue-card' : ''}`}>
                     <div className="fs-card-top">
-                       {/* BADGE LOGIC UPDATED: Green for safe days */}
                        <span className={`fs-badge ${isOverdue ? 'red-pulse' : isUrgent ? 'orange-pulse' : 'green-pulse'}`}>
                          {isOverdue && <FaExclamationTriangle style={{marginRight:5}} />}
                          {isOverdue ? 'OVERDUE' : item.daysLeft === 0 ? 'TODAY!' : `${item.daysLeft} DAYS LEFT`}
