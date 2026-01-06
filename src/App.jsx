@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ICAL from 'ical.js';
-import confetti from 'canvas-confetti'; // Confetti Library
+import confetti from 'canvas-confetti';
 import { 
   FaCalendarAlt, FaClock, FaLink, FaTrash, FaCheckCircle, 
-  FaExclamationCircle, FaRocket, FaQuestionCircle, FaTimes, FaUndo, FaFilter 
+  FaExclamationCircle, FaRocket, FaHome, FaBook, FaChartPie, 
+  FaCog, FaSignOutAlt, FaBars, FaSearch, FaFilter, FaUndo, FaExclamationTriangle 
 } from 'react-icons/fa';
 import { BsCheck2Square, BsHourglassSplit } from 'react-icons/bs';
 import './App.css';
@@ -14,9 +15,11 @@ function App() {
   const [completedTasks, setCompletedTasks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showHelp, setShowHelp] = useState(false);
-  const [filter, setFilter] = useState('all'); // all, pending, completed
-  const [currentTime, setCurrentTime] = useState(new Date()); // Live Timer සඳහා
+  const [filter, setFilter] = useState('all'); 
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  
+  const glowRef = useRef(null);
 
   useEffect(() => {
     const savedUrl = localStorage.getItem('sltc_calendar_url');
@@ -28,9 +31,20 @@ function App() {
       fetchAssignments(savedUrl);
     }
 
-    // තත්පරෙන් තත්පරේ වෙලාව Update කරනවා (Countdown එකට)
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+
+    const handleMouseMove = (e) => {
+      if (glowRef.current) {
+        glowRef.current.style.left = `${e.clientX}px`;
+        glowRef.current.style.top = `${e.clientY}px`;
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
 
   const fetchAssignments = async (calendarUrl) => {
@@ -40,7 +54,7 @@ function App() {
     try {
       const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(calendarUrl)}`;
       const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error("Link එක වැඩ කරන්නේ නැත. URL එක පරීක්ෂා කරන්න.");
+      if (!response.ok) throw new Error("Link failed");
       
       const textData = await response.text();
       const jcalData = ICAL.parse(textData);
@@ -49,21 +63,16 @@ function App() {
 
       const formattedEvents = vevents.map(vevent => {
         const event = new ICAL.Event(vevent);
-        const title = event.summary;
-        const description = event.description;
         const startDate = event.startDate.toJSDate();
-        
-        // Days Left (Static Calculation)
         const now = new Date();
         const diffTime = startDate - now;
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         return {
           id: event.uid,
-          title: title || "No Title",
+          title: event.summary || "No Title",
           date: startDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
           time: startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          description: description || "",
           rawDate: startDate,
           daysLeft: diffDays
         };
@@ -72,11 +81,10 @@ function App() {
       formattedEvents.sort((a, b) => a.rawDate - b.rawDate);
       setAssignments(formattedEvents);
       localStorage.setItem('sltc_calendar_url', calendarUrl);
-      setShowHelp(false);
 
     } catch (err) {
       console.error(err);
-      setError("දත්ත ලබාගැනීමට නොහැක. Link එක නිවැරදි දැයි බලන්න.");
+      setError("Link Error. Check URL.");
     } finally {
       setLoading(false);
     }
@@ -100,34 +108,22 @@ function App() {
       updatedCompleted = completedTasks.filter(taskId => taskId !== id);
     } else {
       updatedCompleted = [...completedTasks, id];
-      // Trigger Confetti! 🎉
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#6366f1', '#a855f7', '#ec4899']
-      });
+      confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 }, colors: ['#00f260', '#0575E6', '#e100ff'] });
     }
     setCompletedTasks(updatedCompleted);
     localStorage.setItem('sltc_completed_tasks', JSON.stringify(updatedCompleted));
   };
 
-  // Live Countdown Helper
   const getCountdown = (targetDate) => {
     const diff = targetDate - currentTime;
     if (diff <= 0) return "Overdue";
-    
-    // පැය 24ට අඩු නම් විතරක් Timer එක පෙන්නනවා
     if (diff > 86400000) return null; 
-
     const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
     const minutes = Math.floor((diff / 1000 / 60) % 60);
     const seconds = Math.floor((diff / 1000) % 60);
-    
     return `${hours}h ${minutes}m ${seconds}s`;
   };
 
-  // Filtering Logic
   const filteredAssignments = assignments.filter(item => {
     if (filter === 'all') return true;
     if (filter === 'completed') return completedTasks.includes(item.id);
@@ -135,134 +131,156 @@ function App() {
     return true;
   });
 
+  const total = assignments.length;
+  const done = completedTasks.filter(id => assignments.find(a => a.id === id)).length;
+  const progress = total === 0 ? 0 : Math.round((done / total) * 100);
+
   return (
-    <div className="main-wrapper">
+    <div className="full-screen-app">
       
-      {/* Live Animated Background */}
-      <div className="background-gradient">
-        <div className="shape shape-1"></div>
-        <div className="shape shape-2"></div>
-        <div className="shape shape-3"></div>
+      {/* Cursor Glow */}
+      <div className="cursor-glow" ref={glowRef}></div>
+
+      {/* Live Background */}
+      <div className="background-blobs">
+        <div className="blob blob-1"></div>
+        <div className="blob blob-2"></div>
+        <div className="blob blob-3"></div>
       </div>
 
-      <div className="glass-panel">
+      <aside className={`fs-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
+        <div className="fs-brand">
+          <FaRocket className="fs-logo" />
+          <h2>LMS Pro</h2>
+        </div>
         
-        {/* Header */}
-        <header className="header">
-          <div className="logo-badge">
-            <FaRocket className="rocket-icon" />
-          </div>
-          <h1>LMS <span className="highlight">Tracker</span></h1>
-          <p>Track your assignments & deadlines.</p>
-        </header>
+        <nav className="fs-nav">
+          <a href="#" className="fs-link active"><FaHome /> Dashboard</a>
+          <a href="#" className="fs-link"><FaBook /> Courses</a>
+          <a href="#" className="fs-link"><FaCalendarAlt /> Calendar</a>
+          <a href="#" className="fs-link"><FaChartPie /> Analytics</a>
+          <a href="#" className="fs-link"><FaCog /> Settings</a>
+        </nav>
 
-        {/* Help */}
-        <div className="help-section-trigger">
-          <button type="button" className="btn-help" onClick={() => setShowHelp(!showHelp)}>
-            {showHelp ? <FaTimes /> : <FaQuestionCircle />} {showHelp ? 'Close' : 'Link එක ගන්නෙ කොහොමද?'}
+        <div className="fs-footer">
+          <button onClick={clearData} className="fs-logout">
+            <FaSignOutAlt /> Reset Data
           </button>
         </div>
+      </aside>
 
-        {showHelp && (
-          <div className="help-box">
-            <h3>📌 Link එක ගන්න පියවර:</h3>
-            <ol>
-              <li>LMS එකේ <strong>Calendar</strong> එකට යන්න.</li>
-              <li>පහළම තියෙන <strong>"Export Calendar"</strong> බට්න් එක ඔබන්න.</li>
-              <li><strong>"Calendar URL"</strong> එක Copy කරගෙන මෙතන Paste කරන්න.</li>
-            </ol>
-          </div>
-        )}
-
-        {/* Input */}
-        <div className="input-section">
-          <form onSubmit={handleSearch} className="search-form">
-            <div className="input-group">
-              <FaLink className="input-icon" />
-              <input 
-                type="text" 
-                placeholder="Paste LMS Calendar Link..." 
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                required
-              />
-            </div>
-            <button type="submit" disabled={loading} className="btn-primary">
-              {loading ? 'Searching...' : 'Show Tasks'}
+      <main className={`fs-main ${isSidebarOpen ? 'expanded' : 'full'}`}>
+        
+        <header className="fs-header glass-effect">
+          <div className="fs-header-left">
+            <button className="fs-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+              <FaBars />
             </button>
-          </form>
+            <div>
+              <h1>Dashboard</h1>
+              <p>Live Overview</p>
+            </div>
+          </div>
+          <div className="fs-profile">
+            <span>ST</span>
+          </div>
+        </header>
+
+        <div className="fs-widgets">
+           <div className="fs-card fs-widget-card glass-effect hover-float">
+              <div className="fs-icon-box blue pulse-anim"><FaClock /></div>
+              <div>
+                <h3>Next Due</h3>
+                <p className="fs-highlight">
+                  {assignments.find(t => !completedTasks.includes(t.id)) ? 
+                    getCountdown(assignments.find(t => !completedTasks.includes(t.id)).rawDate) || "Upcoming" : 
+                    "No Tasks"}
+                </p>
+              </div>
+           </div>
+
+           <div className="fs-card fs-widget-card glass-effect hover-float">
+              <div className="fs-icon-box green"><FaChartPie /></div>
+              <div className="fs-progress-info">
+                <h3>Progress</h3>
+                <p>{progress}% Done</p>
+                <div className="fs-progress-bg">
+                  <div className="fs-progress-fill" style={{width: `${progress}%`}}></div>
+                </div>
+              </div>
+           </div>
+
+           <div className="fs-card fs-sync-card glass-effect hover-float">
+              <form onSubmit={handleSearch} className="fs-sync-form">
+                <input 
+                  type="text" 
+                  placeholder="Paste LMS Calendar Link..." 
+                  value={url} 
+                  onChange={(e) => setUrl(e.target.value)} 
+                />
+                <button disabled={loading}>{loading ? '...' : 'Sync'}</button>
+              </form>
+           </div>
         </div>
 
-        {error && <div className="error-msg"><FaExclamationCircle /> {error}</div>}
+        {error && <div className="fs-error glass-effect"><FaExclamationCircle /> {error}</div>}
 
-        {/* Filter Tabs (New!) */}
-        {assignments.length > 0 && (
-          <div className="filter-tabs">
-            <button className={`tab-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>All</button>
-            <button className={`tab-btn ${filter === 'pending' ? 'active' : ''}`} onClick={() => setFilter('pending')}>Pending 🔥</button>
-            <button className={`tab-btn ${filter === 'completed' ? 'active' : ''}`} onClick={() => setFilter('completed')}>Completed ✅</button>
-            <button onClick={clearData} className="btn-clear-mini"><FaTrash /></button>
+        <div className="fs-content-area">
+          <div className="fs-toolbar">
+             <h3>Assignments Queue ({filteredAssignments.length})</h3>
+             <div className="fs-filters">
+               <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>All</button>
+               <button className={filter === 'pending' ? 'active' : ''} onClick={() => setFilter('pending')}>Pending</button>
+               <button className={filter === 'completed' ? 'active' : ''} onClick={() => setFilter('completed')}>Done</button>
+             </div>
           </div>
-        )}
 
-        {/* Grid */}
-        <div className="grid-container">
-          {filteredAssignments.length > 0 ? (
-            filteredAssignments.map((item, index) => {
-              const isCompleted = completedTasks.includes(item.id);
-              const countdown = getCountdown(item.rawDate);
-              
-              return (
-                <div key={index} className={`task-card ${isCompleted ? 'completed' : item.daysLeft < 3 ? 'urgent' : ''}`}>
-                  <div className="card-top">
-                    {isCompleted ? (
-                      <span className="status-badge success">Submitted ✅</span>
-                    ) : (
-                      <span className={`status-badge ${item.daysLeft < 0 ? 'overdue' : item.daysLeft < 3 ? 'danger' : 'safe'}`}>
-                        {item.daysLeft < 0 ? 'OVERDUE' : item.daysLeft === 0 ? 'TODAY!' : `${item.daysLeft} DAYS LEFT`}
-                      </span>
-                    )}
-                    <span className="date-text"><FaCalendarAlt /> {item.date}</span>
-                  </div>
-                  
-                  <h3 className="task-title">{item.title}</h3>
-
-                  {/* Live Countdown Display (New!) */}
-                  {!isCompleted && countdown && item.daysLeft >= 0 && (
-                    <div className="live-timer">
-                      <BsHourglassSplit className="spin-icon" /> {countdown} left
+          <div className="fs-grid">
+            {filteredAssignments.length > 0 ? (
+              filteredAssignments.map((item, index) => {
+                const isCompleted = completedTasks.includes(item.id);
+                const countdown = getCountdown(item.rawDate);
+                const isOverdue = item.daysLeft < 0 && !isCompleted;
+                const isUrgent = item.daysLeft < 3 && item.daysLeft >= 0 && !isCompleted;
+                
+                return (
+                  <div key={index} className={`fs-task-card glass-effect hover-float ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue-card' : ''}`}>
+                    <div className="fs-card-top">
+                       {/* BADGE LOGIC UPDATED: Green for safe days */}
+                       <span className={`fs-badge ${isOverdue ? 'red-pulse' : isUrgent ? 'orange-pulse' : 'green-pulse'}`}>
+                         {isOverdue && <FaExclamationTriangle style={{marginRight:5}} />}
+                         {isOverdue ? 'OVERDUE' : item.daysLeft === 0 ? 'TODAY!' : `${item.daysLeft} DAYS LEFT`}
+                       </span>
+                       {!isCompleted && countdown && <span className="fs-timer"><BsHourglassSplit className="spin" /> {countdown}</span>}
                     </div>
-                  )}
-                  
-                  <div className="card-footer">
-                    <span className="time-text"><FaClock /> {item.time}</span>
+
+                    <h4>{item.title}</h4>
                     
+                    <div className="fs-meta">
+                      <span><FaCalendarAlt /> {item.date}</span>
+                      <span><FaClock /> {item.time}</span>
+                    </div>
+
                     <button 
-                      className={`btn-check ${isCompleted ? 'checked' : ''}`} 
+                      className={`fs-action-btn ${isCompleted ? 'undo' : 'done'}`} 
                       onClick={() => toggleComplete(item.id)}
                     >
-                      {isCompleted ? <FaUndo /> : <BsCheck2Square />}
-                      {isCompleted ? ' Undo' : ' Mark Done'}
+                      {isCompleted ? <><FaUndo /> Undo</> : <><BsCheck2Square /> Mark Done</>}
                     </button>
                   </div>
-                </div>
-              );
-            })
-          ) : (
-            !loading && (
-              <div className="empty-state">
-                <div className="empty-icon-circle"><FaCheckCircle /></div>
-                <h3>{filter === 'all' ? 'No Tasks Found' : 'No Tasks in this Filter'}</h3>
-                <p>{filter === 'all' ? 'Paste your LMS calendar link to get started.' : 'Try changing the filter.'}</p>
-              </div>
-            )
-          )}
+                );
+              })
+            ) : (
+               <div className="fs-empty glass-effect">
+                 <FaRocket className="fs-empty-icon float-anim" />
+                 <h3>No Assignments Found</h3>
+                 <p>Sync your calendar to get started.</p>
+               </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <footer className="site-footer">
-        <p>Powered by <span className="brand-name">Oska Tech 🚀</span></p>
-      </footer>
+      </main>
     </div>
   );
 }
