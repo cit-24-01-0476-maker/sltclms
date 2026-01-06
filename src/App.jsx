@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import ICAL from 'ical.js';
-import { FaCalendarAlt, FaClock, FaLink, FaTrash, FaCheckCircle, FaExclamationCircle, FaRocket, FaQuestionCircle, FaTimes, FaUndo } from 'react-icons/fa';
+import { 
+  FaCalendarAlt, FaClock, FaLink, FaTrash, FaCheckCircle, 
+  FaExclamationCircle, FaRocket, FaQuestionCircle, FaTimes, FaUndo 
+} from 'react-icons/fa';
 import { BsCheck2Square } from 'react-icons/bs';
 import './App.css';
 
 function App() {
   const [url, setUrl] = useState('');
   const [assignments, setAssignments] = useState([]);
-  const [completedTasks, setCompletedTasks] = useState([]); // Done කරපු ඒවා මතක තියාගන්න
+  const [completedTasks, setCompletedTasks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showHelp, setShowHelp] = useState(false);
 
   useEffect(() => {
-    // කලින් Save කරපු Link එක සහ Completed Tasks ගන්නවා
     const savedUrl = localStorage.getItem('sltc_calendar_url');
     const savedCompleted = JSON.parse(localStorage.getItem('sltc_completed_tasks')) || [];
     
@@ -31,7 +33,7 @@ function App() {
     try {
       const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(calendarUrl)}`;
       const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error("Link එක වැඩ කරන්නේ නැත. කරුණාකර URL එක පරීක්ෂා කරන්න.");
+      if (!response.ok) throw new Error("Link එක වැඩ කරන්නේ නැත. URL එක පරීක්ෂා කරන්න.");
       
       const textData = await response.text();
       const jcalData = ICAL.parse(textData);
@@ -59,9 +61,7 @@ function App() {
         };
       });
 
-      // ළඟම එන ඒවා උඩට ගන්න
       formattedEvents.sort((a, b) => a.rawDate - b.rawDate);
-      
       setAssignments(formattedEvents);
       localStorage.setItem('sltc_calendar_url', calendarUrl);
       setShowHelp(false);
@@ -87,13 +87,12 @@ function App() {
     setCompletedTasks([]);
   };
 
-  // Task එක Done/Undo කරන Function එක
   const toggleComplete = (id) => {
     let updatedCompleted;
     if (completedTasks.includes(id)) {
-      updatedCompleted = completedTasks.filter(taskId => taskId !== id); // අයින් කරනවා (Undo)
+      updatedCompleted = completedTasks.filter(taskId => taskId !== id);
     } else {
-      updatedCompleted = [...completedTasks, id]; // එකතු කරනවා (Mark Done)
+      updatedCompleted = [...completedTasks, id];
     }
     setCompletedTasks(updatedCompleted);
     localStorage.setItem('sltc_completed_tasks', JSON.stringify(updatedCompleted));
@@ -101,7 +100,8 @@ function App() {
 
   return (
     <div className="main-wrapper">
-      {/* Background Animation */}
+      
+      {/* Background Shapes */}
       <div className="background-gradient">
         <div className="shape shape-1"></div>
         <div className="shape shape-2"></div>
@@ -109,6 +109,8 @@ function App() {
       </div>
 
       <div className="glass-panel">
+        
+        {/* Header Section */}
         <header className="header">
           <div className="logo-badge">
             <FaRocket className="rocket-icon" />
@@ -117,14 +119,14 @@ function App() {
           <p>Track your assignments & deadlines.</p>
         </header>
 
-        {/* Help Toggle */}
+        {/* Help Button */}
         <div className="help-section-trigger">
           <button type="button" className="btn-help" onClick={() => setShowHelp(!showHelp)}>
             {showHelp ? <FaTimes /> : <FaQuestionCircle />} {showHelp ? 'Close' : 'Link එක ගන්නෙ කොහොමද?'}
           </button>
         </div>
 
-        {/* Instructions */}
+        {/* Help Box */}
         {showHelp && (
           <div className="help-box">
             <h3>📌 Link එක ගන්න පියවර:</h3>
@@ -133,7 +135,6 @@ function App() {
               <li>පහළම තියෙන <strong>"Export Calendar"</strong> බට්න් එක ඔබන්න.</li>
               <li><strong>"Calendar URL"</strong> එක Copy කරගෙන මෙතන Paste කරන්න.</li>
             </ol>
-            <p className="note">* ඔයා Assignment එක Submit කළාට පස්සේ, කාඩ් එකේ "Mark Done" ඔබන්න.</p>
           </div>
         )}
 
@@ -144,14 +145,14 @@ function App() {
               <FaLink className="input-icon" />
               <input 
                 type="text" 
-                placeholder="Paste LMS Calendar Link here..." 
+                placeholder="Paste LMS Calendar Link..." 
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 required
               />
             </div>
             <button type="submit" disabled={loading} className="btn-primary">
-              {loading ? 'Checking...' : 'Show Tasks'}
+              {loading ? 'Searching...' : 'Show Tasks'}
             </button>
           </form>
           
@@ -164,6 +165,7 @@ function App() {
 
         {error && <div className="error-msg"><FaExclamationCircle /> {error}</div>}
 
+        {/* Task Grid */}
         <div className="grid-container">
           {assignments.length > 0 ? (
             assignments.map((item, index) => {
@@ -176,7 +178,7 @@ function App() {
                       <span className="status-badge success">Submitted ✅</span>
                     ) : (
                       <span className={`status-badge ${item.daysLeft < 0 ? 'overdue' : item.daysLeft < 3 ? 'danger' : 'safe'}`}>
-                        {item.daysLeft < 0 ? 'Overdue' : item.daysLeft === 0 ? 'Today!' : `${item.daysLeft} Days Left`}
+                        {item.daysLeft < 0 ? 'OVERDUE' : item.daysLeft === 0 ? 'TODAY!' : `${item.daysLeft} DAYS LEFT`}
                       </span>
                     )}
                     <span className="date-text"><FaCalendarAlt /> {item.date}</span>
@@ -187,7 +189,6 @@ function App() {
                   <div className="card-footer">
                     <span className="time-text"><FaClock /> {item.time}</span>
                     
-                    {/* Mark Done Button */}
                     <button 
                       className={`btn-check ${isCompleted ? 'checked' : ''}`} 
                       onClick={() => toggleComplete(item.id)}
@@ -202,9 +203,7 @@ function App() {
           ) : (
             !loading && (
               <div className="empty-state">
-                <div className="empty-icon-circle">
-                   <FaCheckCircle />
-                </div>
+                <div className="empty-icon-circle"><FaCheckCircle /></div>
                 <h3>No Tasks Found</h3>
                 <p>Paste your LMS calendar link to get started.</p>
               </div>
