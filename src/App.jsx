@@ -17,6 +17,8 @@ function App() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all'); 
   const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Mobile Menu Logic
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1000);
   
   const glowRef = useRef(null);
@@ -62,6 +64,7 @@ function App() {
     if (window.innerWidth <= 1000) setIsSidebarOpen(false);
   };
 
+  // 🔥 SMART PROXY FETCHING
   const fetchAssignments = async (calendarUrl) => {
     setLoading(true);
     setError('');
@@ -69,12 +72,14 @@ function App() {
     
     try {
       let textData = null;
+      // Try Primary Proxy
       try {
         const proxyUrl1 = `https://corsproxy.io/?${encodeURIComponent(cleanUrl)}`;
         const response1 = await fetch(proxyUrl1);
         if (response1.ok) textData = await response1.text();
       } catch (e) { console.warn("Primary proxy failed"); }
 
+      // Try Backup Proxy
       if (!textData) {
         const proxyUrl2 = `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanUrl)}`;
         const response2 = await fetch(proxyUrl2);
@@ -156,7 +161,7 @@ function App() {
   };
 
   const shareOnWhatsApp = (task) => {
-    const text = `🚀 *LMS Assignment Alert!*\n\n📌 *Task:* ${task.title}\n📅 *Due:* ${task.date} @ ${task.time}\n⏳ *Status:* ${task.daysLeft} Days Left\n\nCheck here: https://sltclms.lmspro.nichesite.org`;
+    const text = `🚀 *LMS Alert!*\n\n📌 *Task:* ${task.title}\n📅 *Due:* ${task.date} @ ${task.time}\n⏳ *Status:* ${task.daysLeft} Days Left\n\nCheck here: https://sltclms.lmspro.nichesite.org`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -270,10 +275,7 @@ function App() {
                   <div key={index} className={`fs-task-card glass-effect hover-float ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue-card' : ''}`}>
                     <div className="fs-card-top">
                        <span className={`fs-badge ${isOverdue ? 'red-pulse' : isUrgent ? 'orange-pulse' : 'green-pulse'}`}>
-                         
-                         {/* 🔥 LIVE DOT ADDED HERE */}
                          <span className="live-dot"></span>
-
                          {isOverdue && <FaExclamationTriangle style={{marginRight:5}} />}
                          {isOverdue ? 'OVERDUE' : item.daysLeft === 0 ? 'TODAY!' : `${item.daysLeft} DAYS LEFT`}
                        </span>
@@ -291,6 +293,7 @@ function App() {
                         {isCompleted ? <><FaUndo /> Undo</> : <><BsCheck2Square /> Mark Done</>}
                       </button>
                       
+                      {/* WhatsApp Button */}
                       <button className="fs-wa-btn" onClick={() => shareOnWhatsApp(item)} title="Share on WhatsApp">
                         <FaWhatsapp />
                       </button>

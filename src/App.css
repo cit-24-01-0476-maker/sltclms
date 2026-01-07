@@ -110,21 +110,8 @@ html, body, #root {
 .fs-card-top { display: flex; justify-content: space-between; margin-bottom: 12px; }
 .fs-badge { display: inline-flex; align-items: center; padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
 
-/* 🔥 LIVE DOT STYLES */
-.live-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: currentColor; /* Text එකේ පාටම ගන්නවා */
-  margin-right: 8px;
-  animation: blink-live 1.5s infinite;
-}
-@keyframes blink-live {
-  0% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.8); }
-  100% { opacity: 1; transform: scale(1); }
-}
+.live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: currentColor; margin-right: 8px; animation: blink-live 1.5s infinite; }
+@keyframes blink-live { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
 
 .red-pulse { background: rgba(239, 68, 68, 0.2); color: #ff4d4d; border: 1px solid #ef4444; box-shadow: 0 0 10px #ef4444; animation: pulse 1s infinite; }
 .orange-pulse { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; box-shadow: 0 0 10px #f59e0b; animation: pulse 2s infinite; }
@@ -139,93 +126,40 @@ html, body, #root {
 
 /* ACTIONS */
 .fs-actions { display: flex; gap: 10px; margin-top: auto; }
-.fs-action-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
+.fs-action-btn { flex-grow: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
 .done { background: var(--primary); color: white; box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
 .done:hover { transform: scale(1.02); }
 .undo { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-muted); }
 
-/* 🔥 WHATSAPP BUTTON (Solid Green Box) */
 /* 🔥 WHATSAPP BUTTON (Neon Snake Border) */
 .fs-wa-btn {
-  position: relative;
-  min-width: 45px;
-  height: 42px;
-  
-  /* අකුරු මැදට */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  
-  background: transparent; /* පසුබිම හිස් කළා */
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 1.5rem;
-  color: #25D366; /* Logo පාට */
-  
-  /* එළිය එළියට පනින්න නොදී තියාගන්න */
-  overflow: hidden;
-  transition: 0.3s;
-  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  position: relative; min-width: 45px; height: 42px; display: flex; align-items: center; justify-content: center;
+  background: #000; border: none; border-radius: 8px; cursor: pointer; font-size: 1.5rem; overflow: hidden; z-index: 1; transition: 0.3s; box-shadow: 0 0 15px rgba(0,0,0,0.5);
 }
-
-/* 1. කැරකෙන වලිගය (The Moving Snake Light) */
 .fs-wa-btn::before {
-  content: '';
-  position: absolute;
-  width: 150%;
-  height: 150%;
-  
-  /* ලයිට් එකේ හැඩය (වලිගයක් වගේ) */
-  background: conic-gradient(
-    transparent 270deg, 
-    #25D366, /* වලිගය */
-    #ffffff   /* හිස (සුදු පාටින් දිලිසෙනවා) */
-  );
-  
-  /* මැදට අරන් කරකවනවා */
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  
-  animation: rotate-snake 2s linear infinite;
-  z-index: 0;
+  content: ''; position: absolute; width: 150%; height: 150%;
+  background: conic-gradient(transparent 270deg, #25D366, #ffffff);
+  top: 50%; left: 50%; transform: translate(-50%, -50%); animation: rotate-border 2s linear infinite; z-index: -2;
 }
-
-/* 2. මැද තියෙන කළු කොටුව (The Mask) */
 .fs-wa-btn::after {
-  content: '';
-  position: absolute;
-  /* බෝඩර් එකේ මහත මෙතනින් වෙනස් කරන්න (දැනට 2px) */
-  inset: 2px; 
-  
-  background: #0a0a0a; /* Button එකේ ඇතුල කළු පාටයි */
-  border-radius: 6px;
-  z-index: 0;
+  content: ''; position: absolute; inset: 2px; background: #050507; border-radius: 6px; z-index: -1;
 }
+.fs-wa-btn svg { position: relative; z-index: 10; color: #25D366; filter: drop-shadow(0 0 5px rgba(37, 211, 102, 0.8)); }
+.fs-wa-btn:hover { transform: scale(1.1); box-shadow: 0 0 25px rgba(37, 211, 102, 0.6); }
+@keyframes rotate-border { 0% { transform: translate(-50%, -50%) rotate(0deg); } 100% { transform: translate(-50%, -50%) rotate(360deg); } }
 
-/* 3. Icon එක උඩට ගන්න (Z-Index) */
-.fs-wa-btn svg {
-  position: relative;
-  z-index: 10; /* Icon එක හැම එකටම උඩින් */
-  filter: drop-shadow(0 0 5px rgba(37, 211, 102, 0.8));
+/* 🔥 CENTERED EMPTY STATE */
+.fs-empty {
+  grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  padding: 80px 20px; min-height: 350px; color: var(--text-muted); border-radius: 16px; background: rgba(20, 20, 30, 0.4); border: 1px solid rgba(255, 255, 255, 0.05);
 }
+.fs-empty-icon { font-size: 5rem; margin-bottom: 20px; opacity: 0.5; color: var(--primary); filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.4)); }
+.fs-empty h3 { font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 10px; }
+.fs-empty p { font-size: 1rem; color: var(--text-muted); max-width: 400px; line-height: 1.5; }
 
-/* Mouse එක ගෙනිච්චම */
-.fs-wa-btn:hover { 
-  transform: scale(1.1); 
-  box-shadow: 0 0 25px rgba(37, 211, 102, 0.6);
-}
+.float-anim { animation: float 3s ease-in-out infinite; }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-/* Mouse එක ගෙනිච්චම ලයිට් එක වේගවත් වෙන්න */
-.fs-wa-btn:hover::before {
-  animation-duration: 0.5s;
-}
-
-/* ඇනිමේෂන් එක */
-@keyframes rotate-snake {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
 /* MOBILE */
 @media (max-width: 1000px) {
   .fs-sidebar { transform: translateX(-100%); width: 260px; position: fixed; }
