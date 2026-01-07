@@ -24,6 +24,7 @@ function App() {
   const glowRef = useRef(null);
 
   useEffect(() => {
+    // Browser Notification Request
     if ("Notification" in window) {
       Notification.requestPermission();
     }
@@ -72,14 +73,14 @@ function App() {
     
     try {
       let textData = null;
-      // Try Primary Proxy
+      // 1. Try Primary Proxy
       try {
         const proxyUrl1 = `https://corsproxy.io/?${encodeURIComponent(cleanUrl)}`;
         const response1 = await fetch(proxyUrl1);
         if (response1.ok) textData = await response1.text();
       } catch (e) { console.warn("Primary proxy failed"); }
 
-      // Try Backup Proxy
+      // 2. Try Backup Proxy
       if (!textData) {
         const proxyUrl2 = `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanUrl)}`;
         const response2 = await fetch(proxyUrl2);
@@ -109,6 +110,7 @@ function App() {
 
       formattedEvents.sort((a, b) => a.rawDate - b.rawDate);
       
+      // Check for new assignments -> Send Browser Notification
       const prevCount = parseInt(localStorage.getItem('sltc_task_count') || "0");
       if (formattedEvents.length > prevCount) {
         sendNotification(formattedEvents.length - prevCount);
@@ -160,8 +162,9 @@ function App() {
     localStorage.setItem('sltc_completed_tasks', JSON.stringify(updatedCompleted));
   };
 
+  // 🔥 MANUAL WHATSAPP SHARE
   const shareOnWhatsApp = (task) => {
-    const text = `🚀 *LMS Alert!*\n\n📌 *Task:* ${task.title}\n📅 *Due:* ${task.date} @ ${task.time}\n⏳ *Status:* ${task.daysLeft} Days Left\n\nCheck here: https://sltclms.lmspro.nichesite.org`;
+    const text = `🚀 *LMS Assignment Alert!*\n\n📌 *Task:* ${task.title}\n📅 *Due:* ${task.date} @ ${task.time}\n⏳ *Status:* ${task.daysLeft} Days Left\n\nCheck here: https://sltclms.lmspro.nichesite.org`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -293,7 +296,7 @@ function App() {
                         {isCompleted ? <><FaUndo /> Undo</> : <><BsCheck2Square /> Mark Done</>}
                       </button>
                       
-                      {/* WhatsApp Button */}
+                      {/* 🔥 WHATSAPP BUTTON (Back to Normal Manual Share) */}
                       <button className="fs-wa-btn" onClick={() => shareOnWhatsApp(item)} title="Share on WhatsApp">
                         <FaWhatsapp />
                       </button>
