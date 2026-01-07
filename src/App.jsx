@@ -4,7 +4,7 @@ import confetti from 'canvas-confetti';
 import { 
   FaCalendarAlt, FaClock, FaLink, FaTrash, FaCheckCircle, 
   FaExclamationCircle, FaRocket, FaHome, FaBook, FaChartPie, 
-  FaCog, FaSignOutAlt, FaBars, FaSearch, FaFilter, FaUndo, FaExclamationTriangle 
+  FaCog, FaSignOutAlt, FaBars, FaWhatsapp, FaUndo, FaExclamationTriangle 
 } from 'react-icons/fa';
 import { BsCheck2Square, BsHourglassSplit } from 'react-icons/bs';
 import './App.css';
@@ -17,13 +17,15 @@ function App() {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all'); 
   const [currentTime, setCurrentTime] = useState(new Date());
-  
-  // FIX: Phone එකෙන් එනවා නම් Menu එක මුලින්ම වහලා තියන්න (False), PC නම් ඇරලා තියන්න (True)
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1000);
   
   const glowRef = useRef(null);
 
   useEffect(() => {
+    if ("Notification" in window) {
+      Notification.requestPermission();
+    }
+
     const savedUrl = localStorage.getItem('sltc_calendar_url');
     const savedCompleted = JSON.parse(localStorage.getItem('sltc_completed_tasks')) || [];
     
@@ -35,7 +37,6 @@ function App() {
 
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
 
-    // Mouse Glow Effect
     const handleMouseMove = (e) => {
       if (glowRef.current) {
         glowRef.current.style.left = `${e.clientX}px`;
@@ -44,13 +45,9 @@ function App() {
     };
     window.addEventListener('mousemove', handleMouseMove);
 
-    // FIX: Screen එක Resize කරනකොට Menu එක Auto adjust වෙන්න
     const handleResize = () => {
-      if (window.innerWidth > 1000) {
-        setIsSidebarOpen(true); // PC නම් ඇරලා තියන්න
-      } else {
-        setIsSidebarOpen(false); // Phone නම් වහන්න
-      }
+      if (window.innerWidth > 1000) setIsSidebarOpen(true);
+      else setIsSidebarOpen(false);
     };
     window.addEventListener('resize', handleResize);
 
@@ -61,23 +58,30 @@ function App() {
     };
   }, []);
 
-  // FIX: Mobile එකේ Menu එකේ Button එකක් එබුවම මෙනු එක වැහෙන්න ඕනේ
   const handleNavClick = () => {
-    if (window.innerWidth <= 1000) {
-      setIsSidebarOpen(false);
-    }
+    if (window.innerWidth <= 1000) setIsSidebarOpen(false);
   };
 
   const fetchAssignments = async (calendarUrl) => {
     setLoading(true);
     setError('');
+    let cleanUrl = calendarUrl.trim();
     
     try {
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(calendarUrl)}`;
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error("Link failed");
-      
-      const textData = await response.text();
+      let textData = null;
+      try {
+        const proxyUrl1 = `https://corsproxy.io/?${encodeURIComponent(cleanUrl)}`;
+        const response1 = await fetch(proxyUrl1);
+        if (response1.ok) textData = await response1.text();
+      } catch (e) { console.warn("Primary proxy failed"); }
+
+      if (!textData) {
+        const proxyUrl2 = `https://api.allorigins.win/raw?url=${encodeURIComponent(cleanUrl)}`;
+        const response2 = await fetch(proxyUrl2);
+        if (!response2.ok) throw new Error("All proxies failed");
+        textData = await response2.text();
+      }
+
       const jcalData = ICAL.parse(textData);
       const comp = new ICAL.Component(jcalData);
       const vevents = comp.getAllSubcomponents('vevent');
@@ -85,9 +89,8 @@ function App() {
       const formattedEvents = vevents.map(vevent => {
         const event = new ICAL.Event(vevent);
         const startDate = event.startDate.toJSDate();
-        const now = new Date();
-        const diffTime = startDate - now;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const diffTime = startDate - new Date(); 
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
 
         return {
           id: event.uid,
@@ -100,14 +103,30 @@ function App() {
       });
 
       formattedEvents.sort((a, b) => a.rawDate - b.rawDate);
+      
+      const prevCount = parseInt(localStorage.getItem('sltc_task_count') || "0");
+      if (formattedEvents.length > prevCount) {
+        sendNotification(formattedEvents.length - prevCount);
+      }
+      localStorage.setItem('sltc_task_count', formattedEvents.length);
+
       setAssignments(formattedEvents);
-      localStorage.setItem('sltc_calendar_url', calendarUrl);
+      localStorage.setItem('sltc_calendar_url', cleanUrl);
 
     } catch (err) {
       console.error(err);
       setError("Link Error. Check URL.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const sendNotification = (newCount) => {
+    if (Notification.permission === "granted") {
+      new Notification("New Assignment Alert! 🚨", {
+        body: `You have ${newCount} new assignments added! Check now.`,
+        icon: "https://cdn-icons-png.flaticon.com/512/2991/2991148.png"
+      });
     }
   };
 
@@ -136,6 +155,11 @@ function App() {
     localStorage.setItem('sltc_completed_tasks', JSON.stringify(updatedCompleted));
   };
 
+  const shareOnWhatsApp = (task) => {
+    const text = `🚀 *LMS Assignment Alert!*\n\n📌 *Task:* ${task.title}\n📅 *Due:* ${task.date} @ ${task.time}\n⏳ *Status:* ${task.daysLeft} Days Left\n\nCheck here: https://sltclms.lmspro.nichesite.org`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
   const getCountdown = (targetDate) => {
     const diff = targetDate - currentTime;
     if (diff <= 0) return "Overdue";
@@ -159,11 +183,7 @@ function App() {
 
   return (
     <div className="full-screen-app">
-      
-      {/* Cursor Glow */}
       <div className="cursor-glow" ref={glowRef}></div>
-
-      {/* Live Background */}
       <div className="background-blobs">
         <div className="blob blob-1"></div>
         <div className="blob blob-2"></div>
@@ -175,7 +195,6 @@ function App() {
           <FaRocket className="fs-logo" />
           <h2>LMS Pro</h2>
         </div>
-        
         <nav className="fs-nav">
           <a href="#" className="fs-link active" onClick={handleNavClick}><FaHome /> Dashboard</a>
           <a href="#" className="fs-link" onClick={handleNavClick}><FaBook /> Courses</a>
@@ -183,29 +202,21 @@ function App() {
           <a href="#" className="fs-link" onClick={handleNavClick}><FaChartPie /> Analytics</a>
           <a href="#" className="fs-link" onClick={handleNavClick}><FaCog /> Settings</a>
         </nav>
-
         <div className="fs-footer">
-          <button onClick={clearData} className="fs-logout">
-            <FaSignOutAlt /> Reset Data
-          </button>
+          <button onClick={clearData} className="fs-logout"><FaSignOutAlt /> Reset Data</button>
         </div>
       </aside>
 
       <main className={`fs-main ${isSidebarOpen ? 'expanded' : 'full'}`}>
-        
         <header className="fs-header glass-effect">
           <div className="fs-header-left">
-            <button className="fs-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-              <FaBars />
-            </button>
+            <button className="fs-menu-btn" onClick={() => setIsSidebarOpen(!isSidebarOpen)}><FaBars /></button>
             <div>
               <h1>Dashboard</h1>
               <p>Live Overview</p>
             </div>
           </div>
-          <div className="fs-profile">
-            <span>ST</span>
-          </div>
+          <div className="fs-profile"><span>ST</span></div>
         </header>
 
         <div className="fs-widgets">
@@ -215,31 +226,21 @@ function App() {
                 <h3>Next Due</h3>
                 <p className="fs-highlight">
                   {assignments.find(t => !completedTasks.includes(t.id)) ? 
-                    getCountdown(assignments.find(t => !completedTasks.includes(t.id)).rawDate) || "Upcoming" : 
-                    "No Tasks"}
+                    getCountdown(assignments.find(t => !completedTasks.includes(t.id)).rawDate) || "Upcoming" : "No Tasks"}
                 </p>
               </div>
            </div>
-
            <div className="fs-card fs-widget-card glass-effect hover-float">
               <div className="fs-icon-box green"><FaChartPie /></div>
               <div className="fs-progress-info">
                 <h3>Progress</h3>
                 <p>{progress}% Done</p>
-                <div className="fs-progress-bg">
-                  <div className="fs-progress-fill" style={{width: `${progress}%`}}></div>
-                </div>
+                <div className="fs-progress-bg"><div className="fs-progress-fill" style={{width: `${progress}%`}}></div></div>
               </div>
            </div>
-
            <div className="fs-card fs-sync-card glass-effect hover-float">
               <form onSubmit={handleSearch} className="fs-sync-form">
-                <input 
-                  type="text" 
-                  placeholder="Paste LMS Calendar Link..." 
-                  value={url} 
-                  onChange={(e) => setUrl(e.target.value)} 
-                />
+                <input type="text" placeholder="Paste LMS Link..." value={url} onChange={(e) => setUrl(e.target.value)} />
                 <button disabled={loading}>{loading ? '...' : 'Sync'}</button>
               </form>
            </div>
@@ -249,7 +250,7 @@ function App() {
 
         <div className="fs-content-area">
           <div className="fs-toolbar">
-             <h3>Assignments Queue ({filteredAssignments.length})</h3>
+             <h3>Assignments ({filteredAssignments.length})</h3>
              <div className="fs-filters">
                <button className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>All</button>
                <button className={filter === 'pending' ? 'active' : ''} onClick={() => setFilter('pending')}>Pending</button>
@@ -269,6 +270,10 @@ function App() {
                   <div key={index} className={`fs-task-card glass-effect hover-float ${isCompleted ? 'completed' : ''} ${isOverdue ? 'overdue-card' : ''}`}>
                     <div className="fs-card-top">
                        <span className={`fs-badge ${isOverdue ? 'red-pulse' : isUrgent ? 'orange-pulse' : 'green-pulse'}`}>
+                         
+                         {/* 🔥 LIVE DOT ADDED HERE */}
+                         <span className="live-dot"></span>
+
                          {isOverdue && <FaExclamationTriangle style={{marginRight:5}} />}
                          {isOverdue ? 'OVERDUE' : item.daysLeft === 0 ? 'TODAY!' : `${item.daysLeft} DAYS LEFT`}
                        </span>
@@ -276,18 +281,20 @@ function App() {
                     </div>
 
                     <h4>{item.title}</h4>
-                    
                     <div className="fs-meta">
                       <span><FaCalendarAlt /> {item.date}</span>
                       <span><FaClock /> {item.time}</span>
                     </div>
 
-                    <button 
-                      className={`fs-action-btn ${isCompleted ? 'undo' : 'done'}`} 
-                      onClick={() => toggleComplete(item.id)}
-                    >
-                      {isCompleted ? <><FaUndo /> Undo</> : <><BsCheck2Square /> Mark Done</>}
-                    </button>
+                    <div className="fs-actions">
+                      <button className={`fs-action-btn ${isCompleted ? 'undo' : 'done'}`} onClick={() => toggleComplete(item.id)}>
+                        {isCompleted ? <><FaUndo /> Undo</> : <><BsCheck2Square /> Mark Done</>}
+                      </button>
+                      
+                      <button className="fs-wa-btn" onClick={() => shareOnWhatsApp(item)} title="Share on WhatsApp">
+                        <FaWhatsapp />
+                      </button>
+                    </div>
                   </div>
                 );
               })
@@ -300,7 +307,6 @@ function App() {
             )}
           </div>
         </div>
-
       </main>
     </div>
   );

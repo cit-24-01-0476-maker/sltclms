@@ -8,6 +8,7 @@
   --success: #10b981;
   --danger: #ef4444;
   --orange: #f59e0b;
+  --wa-green: #25D366;
 }
 
 * { box-sizing: border-box; cursor: default; }
@@ -33,12 +34,7 @@ html, body, #root {
 .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: #4f46e5; border-radius: 50%; animation-duration: 10s; }
 .blob-2 { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: #9333ea; border-radius: 50%; animation-delay: -2s; animation-duration: 12s; }
 .blob-3 { top: 40%; left: 40%; width: 30vw; height: 30vw; background: #e11d48; border-radius: 50%; opacity: 0.4; animation-duration: 15s; }
-
-@keyframes float { 
-  0% { transform: translate(0, 0) scale(1); } 
-  50% { transform: translate(30px, 50px) scale(1.1); } 
-  100% { transform: translate(-20px, -40px) scale(0.9); } 
-}
+@keyframes float { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(30px, 50px) scale(1.1); } 100% { transform: translate(-20px, -40px) scale(0.9); } }
 
 /* GLASS EFFECT */
 .glass-effect {
@@ -97,65 +93,139 @@ html, body, #root {
 .fs-sync-form button { background: var(--primary); border: none; color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; white-space: nowrap; box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); transition: 0.3s; }
 .fs-sync-form button:hover { transform: scale(1.05); }
 
-/* CONTENT */
+/* CONTENT & GRID */
 .fs-content-area { padding: 20px 40px 40px 40px; }
 .fs-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
 .fs-filters button { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; margin-left: 8px; transition: 0.3s; }
 .fs-filters button:hover, .fs-filters button.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
 
-/* GRID */
-.fs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.fs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
 .fs-task-card { border-radius: 16px; padding: 25px; position: relative; display: flex; flex-direction: column; transition: 0.3s; }
 .fs-task-card.completed { opacity: 0.6; border-left: 4px solid var(--success); filter: grayscale(0.5); }
 
-/* --- 🌟 BADGE GLOW EFFECTS --- */
+/* BADGES & LIVE DOT */
 .overdue-card { border: 1px solid #ef4444; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2); animation: card-pulse 2s infinite; }
-@keyframes card-pulse { 
-  0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); } 
-  50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); border-color: #ef4444; } 
-  100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); } 
-}
+@keyframes card-pulse { 0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); } 50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.5); border-color: #ef4444; } 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); } }
 
 .fs-card-top { display: flex; justify-content: space-between; margin-bottom: 12px; }
-.fs-badge { padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+.fs-badge { display: inline-flex; align-items: center; padding: 5px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
 
-/* Red Pulse (Overdue) */
+/* 🔥 LIVE DOT STYLES */
+.live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor; /* Text එකේ පාටම ගන්නවා */
+  margin-right: 8px;
+  animation: blink-live 1.5s infinite;
+}
+@keyframes blink-live {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
 .red-pulse { background: rgba(239, 68, 68, 0.2); color: #ff4d4d; border: 1px solid #ef4444; box-shadow: 0 0 10px #ef4444; animation: pulse 1s infinite; }
-
-/* Orange Pulse (Urgent) */
 .orange-pulse { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid #f59e0b; box-shadow: 0 0 10px #f59e0b; animation: pulse 2s infinite; }
-
-/* Green Pulse (Safe/Left Days) - NEW! 🟢 */
-.green-pulse { 
-  background: rgba(16, 185, 129, 0.2); 
-  color: #10b981; 
-  border: 1px solid #10b981; 
-  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); 
-  animation: pulse-green 3s infinite; 
-}
-@keyframes pulse-green {
-  0% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.2); }
-  50% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.6); }
-  100% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.2); }
-}
+.green-pulse { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); animation: pulse-green 3s infinite; }
+@keyframes pulse-green { 0% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.2); } 50% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.6); } 100% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.2); } }
 
 .fs-timer { font-size: 0.8rem; color: #f43f5e; display: flex; align-items: center; gap: 5px; font-weight: 600; text-shadow: 0 0 5px rgba(244, 63, 94, 0.6); }
 .spin { animation: spin 2s linear infinite; }
-@keyframes spin { 100% { transform: rotate(360deg); } }
-
 .fs-task-card h4 { margin: 0 0 15px 0; font-size: 1.1rem; line-height: 1.4; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 .fs-meta { display: flex; gap: 15px; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; }
 .fs-meta span { display: flex; align-items: center; gap: 5px; }
 
-.fs-action-btn { margin-top: auto; width: 100%; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
+/* ACTIONS */
+.fs-actions { display: flex; gap: 10px; margin-top: auto; }
+.fs-action-btn { flex: 1; padding: 10px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.3s; }
 .done { background: var(--primary); color: white; box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
 .done:hover { transform: scale(1.02); }
 .undo { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: var(--text-muted); }
 
-.fs-empty { grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-muted); border-radius: 16px; }
-.float-anim { animation: float 3s ease-in-out infinite; }
-@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+/* 🔥 WHATSAPP BUTTON (Solid Green Box) */
+/* 🔥 WHATSAPP BUTTON (Neon Snake Border) */
+.fs-wa-btn {
+  position: relative;
+  min-width: 45px;
+  height: 42px;
+  
+  /* අකුරු මැදට */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  background: transparent; /* පසුබිම හිස් කළා */
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: #25D366; /* Logo පාට */
+  
+  /* එළිය එළියට පනින්න නොදී තියාගන්න */
+  overflow: hidden;
+  transition: 0.3s;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
 
+/* 1. කැරකෙන වලිගය (The Moving Snake Light) */
+.fs-wa-btn::before {
+  content: '';
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  
+  /* ලයිට් එකේ හැඩය (වලිගයක් වගේ) */
+  background: conic-gradient(
+    transparent 270deg, 
+    #25D366, /* වලිගය */
+    #ffffff   /* හිස (සුදු පාටින් දිලිසෙනවා) */
+  );
+  
+  /* මැදට අරන් කරකවනවා */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  
+  animation: rotate-snake 2s linear infinite;
+  z-index: 0;
+}
+
+/* 2. මැද තියෙන කළු කොටුව (The Mask) */
+.fs-wa-btn::after {
+  content: '';
+  position: absolute;
+  /* බෝඩර් එකේ මහත මෙතනින් වෙනස් කරන්න (දැනට 2px) */
+  inset: 2px; 
+  
+  background: #0a0a0a; /* Button එකේ ඇතුල කළු පාටයි */
+  border-radius: 6px;
+  z-index: 0;
+}
+
+/* 3. Icon එක උඩට ගන්න (Z-Index) */
+.fs-wa-btn svg {
+  position: relative;
+  z-index: 10; /* Icon එක හැම එකටම උඩින් */
+  filter: drop-shadow(0 0 5px rgba(37, 211, 102, 0.8));
+}
+
+/* Mouse එක ගෙනිච්චම */
+.fs-wa-btn:hover { 
+  transform: scale(1.1); 
+  box-shadow: 0 0 25px rgba(37, 211, 102, 0.6);
+}
+
+/* Mouse එක ගෙනිච්චම ලයිට් එක වේගවත් වෙන්න */
+.fs-wa-btn:hover::before {
+  animation-duration: 0.5s;
+}
+
+/* ඇනිමේෂන් එක */
+@keyframes rotate-snake {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
 /* MOBILE */
 @media (max-width: 1000px) {
   .fs-sidebar { transform: translateX(-100%); width: 260px; position: fixed; }
