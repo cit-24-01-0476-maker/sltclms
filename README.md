@@ -23,7 +23,7 @@ Open the development URL printed by Vite.
 
 ## Deployment configuration
 
-Before deploying, review the `homepage` field in `package.json` and the base-path configuration in `vite.config.js`. The repository currently contains a placeholder GitHub username in its homepage value; use the actual deployment target.
+The existing `vite.config.js` uses `/` as its base path, suitable for a root-domain deployment. For a GitHub Pages project URL under `/sltclms/`, adjust the base path before building. Publish only after choosing the intended hosting target.
 
 ## Contributing
 
