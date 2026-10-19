@@ -1,16 +1,30 @@
-# React + Vite
+# SLTC LMS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React and Vite web application project.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+git clone https://github.com/cit-24-01-0476-maker/sltclms.git
+cd sltclms
+npm ci
+npm run dev
+```
 
-## React Compiler
+Open the development URL printed by Vite.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Available commands
 
-## Expanding the ESLint configuration
+- `npm run dev` — start Vite
+- `npm run build` — build the application
+- `npm run lint` — run ESLint
+- `npm run preview` — preview the build
+- `npm run deploy` — build and publish `dist` with gh-pages
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Deployment configuration
+
+Before deploying, review the `homepage` field in `package.json` and the base-path configuration in `vite.config.js`. The repository currently contains a placeholder GitHub username in its homepage value; use the actual deployment target.
+
+## Contributing
+
+Describe the page affected and the expected behavior. Include a screenshot for UI changes, and run the available build and lint checks.
